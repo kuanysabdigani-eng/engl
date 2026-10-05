@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngFlow Pro • B2 Elite Master (35+)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #030712; color: #f3f4f6; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; }
+        header { text-align: center; margin-bottom: 12px; border-bottom: 1px solid #1f2937; padding-bottom: 8px; }
+        h1 { font-size: 20px; font-weight: 900; background: linear-gradient(to right, #22d3ee, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .sub { font-size: 11px; color: #9ca3af; }
+        
+        .container { max-width: 400px; width: 100%; margin: 0 auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Меню (сетка) */
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .btn-menu { background: #111827; border: 1px solid #1f2937; color: #d1d5db; padding: 8px 4px; font-size: 11px; font-weight: 600; border-radius: 10px; cursor: pointer; text-align: center; transition: 0.2s; }
+        .btn-menu.active { background: rgba(8, 145, 178, 0.2); border-color: #06b6d4; color: #22d3ee; }
+
+        /* Карточка */
+        .card-box { width: 100%; height: 210px; perspective: 1000px; cursor: pointer; margin-top: 5px; }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.5s; transform-style: preserve-3d; }
+        .card-box.flipped .card-inner { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-back { background: #111827; border-color: rgba(6, 182, 212, 0.3); transform: rotateY(180deg); overflow-y: auto; text-align: left; }
+        
+        /* Кнопки управления */
+        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .btn-action { padding: 10px; font-size: 12px; font-weight: bold; border-radius: 10px; cursor: pointer; border: none; text-align: center; }
+        .btn-hard { background: #1f2937; color: #9ca3af; border: 1px solid #374151; }
+        .btn-know { background: #0891b2; color: #030712; }
+        
+        /* Большая кнопка следующей фразы */
+        .btn-next-big { width: 100%; background: linear-gradient(to right, #0891b2, #6366f1); color: #fff; border: none; padding: 12px; font-size: 13px; font-weight: bold; border-radius: 12px; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3); transition: 0.2s; }
+        .btn-next-big:active { transform: scale(0.98); }
+
+        /* Разделы */
+        .section { display: none; }
+        .section.active { display: flex; flex-direction: column; gap: 10px; }
+
+        input, textarea { width: 100%; background: #0b0f19; border: 1px solid #1f2937; border-radius: 10px; padding: 10px; color: #fff; font-size: 12px; outline: none; }
+        input:focus, textarea:focus { border-color: #06b6d4; }
+        .btn-main { width: 100%; background: #0891b2; color: #fff; border: none; padding: 10px; font-weight: bold; font-size: 12px; border-radius: 10px; cursor: pointer; }
+        
+        .badge { font-size: 10px; padding: 2px 8px; background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); color: #22d3ee; border-radius: 20px; display: inline-block; }
+        
+        .guide-box { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 12px; font-size: 11px; color: #d1d5db; line-height: 1.5; }
+        .guide-box h4 { color: #22d3ee; margin-bottom: 4px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>EngFlow Pro</h1>
+        <p class="sub">B2 Elite Mastery • Элементов в базе: <span id="count" style="color: #22d3ee; font-weight: bold;">0</span></p>
+    </header>
+
+    <div class="container">
+        <!-- Меню категорий и режимов -->
+        <div class="menu-grid">
+            <button onclick="setCategory('idioms')" id="btn-idioms" class="btn-menu active">💡 Идиомы</button>
+            <button onclick="setCategory('phrasal')" id="btn-phrasal" class="btn-menu">🔄 Фразовые</button>
+            <button onclick="setCategory('grammar')" id="btn-grammar" class="btn-menu">⚙ Грамматика</button>
+        </div>
+        <div class="menu-grid">
+            <button onclick="setCategory('slang')" id="btn-slang" class="btn-menu">🎬 Сленг</button>
+            <button onclick="switchMode('builder')" id="btn-builder" class="btn-menu">🧩 Синтаксис</button>
+            <button onclick="switchMode('listening')" id="btn-listening" class="btn-menu">🎧 На слух</button>
+        </div>
+
+        <!-- РЕЖИМ КАРТОЧЕК -->
+        <div id="section-cards" class="section active">
+            <div class="card-box" id="main-card" onclick="toggleCard()">
+                <div class="card-inner">
+                    <!-- Лицевая -->
+                    <div class="card-face">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span id="card-tag" class="badge">B2</span>
+                            <button onclick="event.stopPropagation(); speakCurrent()" style="background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); color: #22d3ee; padding: 4px 8px; border-radius: 8px; font-size: 11px; cursor: pointer;">🔊 Аудио</button>
+                        </div>
+                        <div style="text-align: center; margin: auto;">
+                            <h2 id="card-front" style="font-size: 20px; font-weight: bold; margin-bottom: 6px;">Загрузка...</h2>
+                            <p style="font-size: 11px; color: #6b7280;">Кликни, чтобы узнать перевод и примеры</p>
+                        </div>
+                        <div style="text-align: right; font-size: 10px; color: #4b5563;">B2 Verified</div>
+                    </div>
+                    <!-- Обратная -->
+                    <div class="card-face card-back">
+                        <span class="badge" style="background: rgba(129,140,248,0.1); border-color: rgba(129,140,248,0.3); color: #818cf8;">Перевод и примеры B2</span>
+                        <div style="margin: auto 0;">
+                            <h3 id="card-back-title" style="font-size: 13px; font-weight: bold; color: #22d3ee; margin-bottom: 4px;">Перевод</h3>
+                            <p id="card-example" style="font-size: 11px; color: #d1d5db; line-height: 1.4; white-space: pre-line;">Примеры...</p>
+                        </div>
+                        <div style="text-align: right; font-size: 10px; color: #818cf8;">⚡️ Клик для возврата</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Большая кнопка следующей фразы -->
+            <button onclick="skipCard()" class="btn-next-big">➡️ Следующая фраза / слово / идиома</button>
+
+            <!-- Дополнительные кнопки -->
+            <div class="controls-grid">
+                <button onclick="nextCard(false)" class="btn-action btn-hard">Сложно 🔄</button>
+                <button onclick="nextCard(true)" class="btn-action btn-know">Выучено (Удалить) ✅</button>
+            </div>
+        </div>
+
+        <!-- РЕЖИМ СИНТАКСИСА И СТРУКТУРЫ -->
+        <div id="section-builder" class="section">
+            <div class="guide-box">
+                <h4>📐 Как строить предложения (Syntax Guide):</h4>
+                <p><b>Золотое правило SVO:</b> Кто (Подлежащее) ➔ Что делает (Сказуемое) ➔ Кем/Чим (Дополнение) ➔ Где (Место) ➔ Когда (Время).<br>
+                <b>Уровень B2 (Инверсия/Вводные):</b> Сложные мысли начинаются с вводных конструкций или союзов (<i>Hardly, Not only, If I were</i>), после чего идет инверсия или придаточное.</p>
+            </div>
+            
+            <div style="background: #111827; border: 1px solid #1f2937; padding: 12px; border-radius: 16px;">
+                <h3 id="builder-title" style="font-size: 12px; font-weight: bold; color: #818cf8; text-transform: uppercase;">🧩 Сборка предложений B2</h3>
+                <p id="builder-translation" style="font-size: 11px; color: #9ca3af; margin: 4px 0;">Перевод фразы...</p>
+                <div id="builder-slots" style="min-height: 45px; background: #030712; border: 1px solid #1f2937; border-radius: 10px; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; margin: 6px 0;"></div>
+                <div id="builder-words" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 8px;"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                    <button onclick="initBuilder()" class="btn-action btn-hard" style="width: 100%;">Сбросить</button>
+                    <button onclick="checkBuilder()" class="btn-action" style="background: #6366f1; color: #fff;">Проверить</button>
+                </div>
+                <p id="builder-feedback" style="font-size: 11px; text-align: center; height: 16px; font-weight: bold; margin-top: 4px;"></p>
+            </div>
+        </div>
+
+        <!-- РЕЖИМ ТРЕНИРОВКИ НА СЛУХ (LISTENING) -->
+        <div id="section-listening" class="section">
+            <div class="guide-box">
+                <h4>🎧 Тренажер восприятия на слух:</h4>
+                <p>Нажми кнопку воспроизведения аудио **вслепую**. Постарайся услышать фразу без подсказок глазами, напечатай её в поле ниже и проверь себя!</p>
+            </div>
+            <div style="background: #111827; border: 1px solid #1f2937; padding: 16px; border-radius: 16px; text-align: center; display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="playListeningAudio()" style="background: #0891b2; color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer;">🔊 Прослушать фразу на слух</button>
+                <input type="text" id="listening-input" placeholder="Введите то, что услышали на английском..." style="text-align: center;">
+                <button onclick="checkListening()" class="btn-main" style="background: #6366f1;">Проверить себя</button>
+                <p id="listening-feedback" style="font-size: 11px; font-weight: bold; min-height: 20px;"></p>
+                <button onclick="nextListeningItem()" class="btn-action btn-hard">Следующая аудио-фраза ➡</button>
+            </div>
+        </div>
+
+        <!-- ФОРМА ДОБАВЛЕНИЯ -->
+        <div style="background: #111827; border: 1px solid #1f2937; padding: 12px; border-radius: 16px; margin-top: auto;">
+            <h3 style="font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px;">Добавить свою конструкцию</h3>
+            <form id="add-form" onsubmit="addCard(event)" style="display: flex; flex-direction: column; gap: 6px;">
+                <input type="text" id="new-front" placeholder="Фраза / Выражение" required>
+                <input type="text" id="new-back" placeholder="Перевод" required>
+                <textarea id="new-example" rows="2" placeholder="Примеры использования" required></textarea>
+                <button type="submit" class="btn-main" style="background: #1f2937; color: #e5e7eb;">Добавить в базу</button>
+            </form>
+        </div>
+    </div>
+
+    <footer style="text-align: center; font-size: 10px; color: #4b5563; margin-top: 10px;">
+        EngFlow Pro • B2 Elite Edition
+    </footer>
+
+    <script>
+        const databases = {
+            idioms: [
+                { front: "To bite the bullet", back: "Стиснуть зубы / перетерпеть трудности", example: "1. I hate going to the dentist, but I just have to bite the bullet.\n2. We are losing money, so we must bite the bullet and restructure." },
+                { front: "Under the weather", back: "Плохо себя чувствовать / приболеть", example: "1. I'm feeling a bit under the weather today, I might stay home.\n2. John is under the weather, so he skipped the strategy meeting." },
+                { front: "Break a leg", back: "Ни пуха ни пера / удачи", example: "1. Break a leg at your presentation today!\n2. All actors wish each other 'break a leg' before going on stage." },
+                { front: "Cost an arm and a leg", back: "Стоить целое состояние / очень дорого", example: "1. That new smartphone costs an arm and a leg.\n2. I'd love to buy a sports car, but it costs an arm and a leg." },
+                { front: "Hit the nail on the head", back: "Попасть в точку / точно угадать", example: "1. You hit the nail on the head with that market analysis.\n2. Her diagnosis of the problem hit the nail on the head." },
+                { front: "Piece of cake", back: "Проще простого / легкая задача", example: "1. Don't worry about the physics exam, it'll be a piece of cake.\n2. Coding the frontend interface was a piece of cake." },
+                { front: "Spill the beans", back: "Выдать секрет / проболтаться", example: "1. Don't spill the beans about our new project launch.\n2. He accidentally spilled the beans on the surprise." },
+                { front: "Once in a blue moon", back: "Очень редко / раз в сто лет", example: "1. I see my old school friends once in a blue moon.\n2. Opportunities like this happen once in a blue moon." },
+                { front: "Burn the midnight oil", back: "Работать до поздна / засиживаться за учебой", example: "1. She is burning the midnight oil to prepare for her exams.\n2. We had to burn the midnight oil to finish the startup MVP." },
+                { front: "Blessing in disguise", back: "Нет худа без добра / скрытое благо", example: "1. Losing that job turned out to be a blessing in disguise.\n2. The flight delay was a blessing in disguise because I met my future partner." },
+                { front: "Add fuel to the fire", back: "Подливать масла в огонь", example: "1. Arguing with him will only add fuel to the fire.\n2. His comments added fuel to the existing controversy." },
+                { front: "At the drop of a hat", back: "Сразу же / без промедления", example: "1. He is ready to travel at the drop of a hat.\n2. She leaves for conferences at the drop of a hat." },
+                { front: "Back to the drawing board", back: "Начать сначала / переосмыслить план", example: "1. Our prototype failed, so it's back to the drawing board.\n2. The client rejected the design, back to the drawing board." },
+                { front: "Ball is in your court", back: "Теперь твоя очередь принимать решение", example: "1. I've sent you the contract, the ball is in your court now.\n2. We presented our offer, now the ball is in their court." },
+                { front: "Barking up the wrong tree", back: "Искать не там / обвинять не того", example: "1. If you think I stole your pen, you're barking up the wrong tree.\n2. Police were barking up the wrong tree for weeks." },
+                { front: "Beat around the bush", back: "Ходить вокруг да около / увиливать", example: "1. Stop beating around the bush and tell me the truth.\n2. He didn't want to beat around the bush, so he spoke directly." },
+                { front: "Best of both worlds", back: "Идеальное сочетание преимуществ", example: "1. Working from home gives you the best of both worlds.\n2. Living near the park and city center is the best of both worlds." },
+                { front: "Bite off more than you can chew", back: "Взять на себя больше, чем сможешь", example: "1. Don't bite off more than you can chew with three startups at once.\n2. He realized he bit off more than he could chew." },
+                { front: "A dime a dozen", back: "Пруд пруди / на каждом шагу", example: "1. Web developers who only know HTML are a dime a dozen.\n2. Good ideas are a dime a dozen; execution is what matters." },
+                { front: "A blessing in disguise", back: "Неприятность, обернувшаяся благом", example: "1. Missing the flight was a blessing in disguise.\n2. The failure taught us a lesson, truly a blessing in disguise." },
+                { front: "A piece of cake", back: "Проще простого", example: "1. The coding test was a piece of cake.\n2. Passing the interview will be a piece of cake." },
+                { front: "Action speaks louder than words", back: "Поступки говорят громче слов", example: "1. Don't just promise success, action speaks louder than words.\n2. Show me your MVP, actions speak louder than words." },
+                { front: "Add insult to injury", back: "Сделать только хуже / сыпать соль на рану", example: "1. Losing the match and then missing the bus added insult to injury.\n2. Don't add insult to injury by blaming him." },
+                { front: "Against the clock", back: "В спешке / наперегонки со временем", example: "1. We are working against the clock to finish the project.\n2. The team raced against the clock before the deadline." },
+                { front: "All ears", back: "Внимательно слушать / весь во внимании", example: "1. Tell me your startup idea, I'm all ears.\n2. She was all ears during the presentation." },
+                { front: "An apple of discord", back: "Яблоко раздора", example: "1. Budget allocation became an apple of discord among founders.\n2. The new rule was an apple of discord." },
+                { front: "Around the clock", back: "Круглосуточно / 24/7", example: "1. Servers operate around the clock to handle traffic.\n2. The support team works around the clock." },
+                { front: "As cool as a cucumber", back: "Спокойный как палочка / невозмутимый", example: "1. Despite the server crash, he remained as cool as a cucumber.\n2. She handled the crisis as cool as a cucumber." },
+                { front: "At all costs",` back: "Любой ценой", example: "1. We must protect user data at all costs.\n2. Success is achieved at all costs." },
+                { front: "At sea", back: "В растерянности / в заблуждении", example: "1. I was completely at sea during the advanced math lecture.\n2. He felt at sea when the topic changed." },
+                { front: "Beat the clock",` back: "Успеть до истечения времени", example: "1. We managed to beat the clock and deploy on time.\n2. Try to beat the clock on this test." },
+                { front: "Better late than never", back: "Лучше поздно, чем никогда", example: "1. You finally finished your code, better late than never.\n2. Better late than never to start learning." },
+                { front: "Between a rock and a hard place",` back: "Между двух огней / безвыходное положение", example: "1. Management left us between a rock and a hard place.\n2. He was caught between a rock and a hard place." },
+                { front: "Birds of a feather", back: "Одного поля ягоды / рыбак рыбака", example: "1. Entrepreneurs and innovators are birds of a feather.\n2. They get along so well because they are birds of a feather." },
+                { front: "Bite your tongue", back: "Прикусить язык / промолчать", example: "1. I had to bite my tongue during the unfair critique.\n2. Better to bite your tongue than say something regretful." }
+            ],
+            phrasal: [
+                { front: "To figure out", back: "Выяснить / понять / разобраться", example: "1. We need to figure out how to solve this bug.\n2. Have you figured out the solution yet?" },
+                { front: "To bring up", back: "Упомянуть / поднять тему в разговоре", example: "1. Why did you have to bring that up during the meeting?\n2. She brought up an interesting point about marketing." },
+                { front: "To look forward to", back: "Ждать с нетерпением", example: "1. I'm really looking forward to the weekend.\n2. We look forward to working with you." },
+                { front: "To run out of", back: "Израсходовать / остаться без чего-то", example: "1. We've run out of coffee, I need to go to the store.\n2. My laptop battery is about to run out." },
+                { front: "To call off", back: "Отменить мероприятие или встречу", example: "1. They had to call off the flight due to bad weather.\n2. The meeting was called off because of an emergency." },
+                { front: "To put up with", back: "Мириться с чем-то / терпеть", example: "1. I can't put up with this constant noise anymore.\n2. She had to put up with a lot of stress." },
+                { front: "To carry out", back: "Выполнять / осуществлять план", example: "1. The team carried out a series of experiments.\n2. We need to carry out this marketing strategy next week." },
+                { front: "To turn down", back: "Отклонить предложение / сделать тише", example: "1. He turned down the job offer because the salary was too low.\n2. Could you please turn down the music?" },
+                { front: "To set up", back: "Настроить / организовать / основать", example: "1. They set up a new tech company in Almaty.\n2. Let's set up a meeting for tomorrow morning." },
+                { front: "To give up", back: "Сдаться / бросить привычку", example: "1. Never give up on your dreams, no matter how hard it gets.\n2. He decided to give up eating fast food." },
+                { front: "To look into", back: "Изучить / исследовать вопрос", example: "1. The engineering team is looking into this server issue.\n2. We will look into your request immediately." },
+                { front: "To point out", back: "Указать на что-то / отметить", example: "1. She pointed out several errors in my code.\n2. I'd like to point out that our timeline is tight." },
+                { front: "To come across", back: "Случайно встретить / натолкнуться", example: "1. I came across an interesting article about physics.\n2. He came across as a very confident speaker." },
+                { front: "To end up", back: "В итоге оказаться / закончить тем, что...", example: "1. If you don't plan, you'll end up wasting time.\n2. We ended up launching the app earlier than expected." },
+                { front: "To rely on", back: "Полагаться на кого-то / зависеть от", example: "1. You can always rely on reliable cloud infrastructure.\n2. We rely heavily on automation tools." },
+                { front: "To turn out", back: "Оказаться в итоге / получиться", example: "1. The project turned out to be a massive success.\n2. It turned out that the bug was simple." },
+                { front: "To drop out", back: "Бросить учебу / выйти из проекта", example: "1. He decided not to drop out of university.\n2. Several participants dropped out of the race." },
+                { front: "To catch up", back: "Наверстать упущенное / догнать", example: "1. I need to catch up on my English reading.\n2. Let's grab coffee and catch up." },
+                { front: "To wind down", back: "Расслабиться после работы", example: "1. I like to listen to music to wind down.\n2. After a long coding session, he winds down by walking." },
+                { front: "To break down", back: "Сломаться / детально разобрать", example: "1. Let's break down this complex problem into smaller tasks.\n2. My old car broke down on the highway." },
+                { front: "To back up", back: "Сделать бэкап / поддержать", example: "1. Always back up your database before deployment.\n2. I will back up your proposal in the council." },
+                { front: "To blow up",` back: "Взорваться / стать вирусным", example: "1. Our startup video blew up on social media.\n2. Don't blow up over a small mistake." },
+                { front: "To bring about", back: "Вызвать / привести к изменениям", example: "1. Innovation brings about technological progress.\n2. The new policy brought about positive results." },
+                { front: "To call on", back: "Призвать / навестить", example: "1. The teacher called on him to answer the question.\n2. We can call on our partners for support." },
+                { front: "To carry on",` back: "Продолжать в том же духе", example: "1. Carry on with your great work!\n2. Despite difficulties, they carried on." },
+                { front: "To catch on", back: "Завоевать популярность / схватывать на лету", example: "1. The new interface design is starting to catch on.\n2. He catches on to new languages very quickly." },
+                { front: "To check out", back: "Проверить / оценить / выписаться", example: "1. Check out this new web prototype on Vercel.\n2. We checked out of the hotel at noon." },
+                { front: "To come up with", back: "Придумать / разработать идею", example: "1. She came up with a brilliant architecture concept.\n2. We need to come up with a better solution." },
+                { front: "To cut down on", back: "Сократить потребление чего-то", example: "1. I need to cut down on drinking coffee.\n2. We must cut down on unnecessary expenses." },
+                { front: "To drop off",` back: "Завезти / снизиться", example: "1. Can you drop me off near the university?\n2. User engagement dropped off on weekends." },
+                { front: "To fall behind", back: "Отставать от графика", example: "1. We can't afford to fall behind schedule.\n2. He fell behind in mathematics." },
+                { front: "To get along", back: "Ладить / дружить", example: "1. The team members get along very well.\n2. Do you get along with your colleagues?" },
+                { front: "To get rid of",` back: "Избавиться от чего-то", example: "1. We need to get rid of legacy code.\n2. He got rid of old habits." },
+                { front: "To give in", back: "Уступить / сдаться под давлением", example: "1. After long negotiations, they gave in.\n2. Never give in to difficulties." },
+                { front: "To grow up", back: "Вырасти / повзрослеть", example: "1. He grew up in Almaty.\n2. It's time to grow up and take responsibility." }
+            ],
+            grammar: [
+                { front: "If I were you, I would...", back: "На твоем месте я бы... (2nd Conditional)", example: "1. If I were you, I would start building this startup immediately.\n2. If I had more time, I would learn Spanish." },
+                { front: "Having done that, he...", back: "Сделав это, он... (Participle Clause)", example: "1. Having finished his code, he deployed it to Vercel.\n2. Having studied hard, she passed the exam easily." },
+                { front: "Hardly had I arrived when...", back: "Едва я прибыл, как... (Inversion)", example: "1. Hardly had I arrived when the presentation started.\n2. Scarcely had we left the house when it started raining." },
+                { front: "Not only is he smart, but also...", back: "Мало того, что он умный, но еще и...", example: "1. Not only is he smart, but he is also a visionary leader.\n2. Not only did she win the competition, but she broke the record." },
+                { front: "It is high time you did...", back: "Давно пора тебе сделать...", example: "1. It is high time you updated your portfolio.\n2. It is high time we started working on our goals." },
+                { front: "Supposing that you fail, what...", back: "Предположим, что ты потерпишь неудачу...", example: "1. Supposing that the plan doesn't work, what is our backup?\n2. Supposing you win the grant, where will you invest?" },
+                { front: "No sooner had we started than...", back: "Стоило нам начать, как...", example: "1. No sooner had we launched the app than the server crashed.\n2. No sooner had I sat down than the phone rang." },
+                { front: "Much as I respect you, I...", back: "Как бы сильно я ни уважал тебя, я...", example: "1. Much as I respect your opinion, I disagree with this decision.\n2. Much as I love coding, I need a break." },
+                { front: "Despite the fact that...", back: "Несмотря на то, что...", example: "1. Despite the fact that it rained, we played football.\n2. Despite having low budget, they built a great MVP." },
+                { front: "In spite of working hard...", back: "Несмотря на усердную работу...", example: "1. In spite of working hard, he missed the deadline.\n2. In spite of difficulties, the project succeeded." },
+                { front: "Provided that you agree...", back: "При условии, что ты согласен...", example: "1. Provided that you finish the task, you can leave early.\n2. We will sign the contract provided that conditions are met." },
+                { front: "Unless we take action...", back: "Если мы не предпримем меры...", example: "1. Unless we optimize the database, the site will crash.\n2. You won't achieve your goals unless you work daily." },
+                { front: "As long as you keep focused...", back: "Пока ты сохраняешь фокус...", example: "1. As long as you keep practicing, your English will improve.\n2. You can use my laptop as long as you treat it well." },
+                { front: "So smart is he that...", back: "Он настолько умный, что... (Inversion)", example: "1. So smart is he that he solved the bug in minutes.\n2. So complex was the algorithm that nobody understood it." },
+                { front: "Little did I know that...", back: "Я и не подозревал, что...", example: "1. Little did I know that my project would go viral.\n2. Little did she know about the surprise party." },
+                { front: "Had I known about this...", back: "Если бы я знал об этом... (Conditional Inversion)", example: "1. Had I known about the bug, I would have fixed it earlier.\n2. Had she studied harder, she would have passed." },
+                { front: "Were they to offer the job...", back: "Если бы они предложили работу...", example: "1. Were they to offer the position, I would accept.\n2. Were we to invest now, profits would rise." },
+                { front: "On no account should you...", back: "Ни в коем случае не следует...", example: "1. On no account should you share your password.\n2. On no account must we compromise on quality." },
+                { front: "Seldom have I seen such...", back: "Редко мне доводилось видеть...", example: "1. Seldom have I seen such a brilliant presentation.\n2. Seldom does he make mistakes in logic." },
+                { front: "Only when you practice...", back: "Только когда ты практикуешься...", example: "1. Only when you practice daily does fluency improve.\n2. Only then did we realize the scale of the problem." },
+                { front: "It is crucial that he be...",` back: "Крайне важно, чтобы он был... (Subjunctive)", example: "1. It is vital that every member be present.\n2. It is important that the code be optimized." },
+                { front: "No matter how hard it is...", back: "Как бы сложно ни было...", example: "1. No matter how hard it is, we will finish the MVP.\n2. No matter what happens, stay focused." },
+                { front: "Whatever happens, we...",` back: "Что бы ни случилось, мы...", example: "1. Whatever happens, we will deliver the project.\n2. Whatever you decide, I will support you." },
+                { front: "Wherever you go, you...", back: "Куда бы ты ни пошел...", example: "1. Wherever you go, keep your core values.\n2. Wherever they build, quality matters." },
+                { front: "Whichever option you choose...",` back: "Какой бы вариант ты ни выбрал...", example: "1. Whichever framework you choose, ensure performance.\n2. Whichever road leads there, let's move." },
+                { front: "Scarcely had we entered when...",` back: "Едва мы вошли, как...", example: "1. Scarcely had we entered the room when the lights went out.\n2. Scarcely had I opened the laptop when it updated." },
+                { front: "Sooner or later, we will...", back: "Рано или поздно мы...", example: "1. Sooner or later, our startup will scale globally.\n2. Sooner or later, truth comes out." },
+                { front: "Such was his impact that...",` back: "Таково было его влияние, что...", example: "1. Such was his influence that the whole team was inspired.\n2. Such was the demand that servers crashed." },
+                { front: "Try as I might, I couldn't...", back: "Как я ни старался, я не мог...", example: "1. Try as I might, I couldn't fix that memory leak.\n2. Try as he might, he couldn't pass the score." },
+                { front: "To be about to do something", back: "Собираться сделать что-то прямо сейчас", example: "1. We are about to launch our web application.\n2. The presentation is about to start." },
+                { front: "To be used to doing something", back: "Иметь привычку / привыкнуть делать что-то", example: "1. I am used to working late nights on projects.\n2. She is used to solving complex equations." },
+                { front: "To get used to something",` back: "Привыкать к чему-то новому", example: "1. It takes time to get used to a new city like Almaty.\n2. He got used to the new workflow." },
+                { front: "It is no use trying to...",` back: "Бесполезно пытаться...", example: "1. It is no use trying to argue with raw logic.\n2. It is no use worrying about past mistakes." },
+                { front: "There is no point in doing...", back: "Нет смысла делать...", example: "1. There is no point in rewriting code from scratch.\n2. There is no point in delaying the launch." },
+                { front: "Worth mentioning is that...",` back: "Стоит упомянуть, что...", example: "1. Worth mentioning is that our architecture is scalable.\n2. Worth mentioning is his dedication to the team." }
+            ],
+            slang: [
+                { front: "It is what it is", back: "Бывает / Такова реальность", example: "1. We lost the match, but it is what it is.\n2. You can't change the past, it is what it is." },
+                { front: "Out of nowhere", back: "Внезапно / из ниоткуда", example: "1. He appeared out of nowhere during the game.\n2. Success came almost out of nowhere." },
+                { front: "No cap", back: "Без обмана / правдиво (современный сленг)", example: "1. This app is actually fire, no cap.\n2. He is the best player in our team, no cap." },
+                { front: "Lowkey / Highkey", back: "Слегка / тайком / абсолютно точно", example: "1. I'm lowkey excited about this new feature.\n2. She is highkey the smartest person I know." },
+                { front: "To ghost someone", back: "Игнорировать / исчезнуть из общения", example: "1. He suddenly ghosted me after our second meeting.\n2. Ghosting people is not a good communication style." },
+                { front: "To flex", back: "Выпендриваться / хвастаться", example: "1. He likes to flex his new sneakers on Instagram.\n2. There is no need to flex, just stay humble." },
+                { front: "Vibe", back: "Атмосфера / настроение", example: "1. The vibe in this office is amazing.\n2. I like the chill vibe of this track." },
+                { front: "Cringe", back: "Кринж / испанский стыд / неловко", example: "1. That joke was so cringe.\n2. I cringed when I watched my old video." },
+                { front: "To spill tea", back: "Сплетничать / рассказывать подробности", example: "1. Grab your coffee and let's spill some tea.\n2. She spilled the tea about the new update." },
+                { front: "Savage", back: "Жесткий / крутой / бескомпромиссный", example: "1. His comeback during the debate was savage.\n2. That move on the football pitch was pure savage." },
+                { front: "Fire", back: "Огонь / круто / топово", example: "1. This beat is absolute fire.\n2. Your new website design is fire." },
+                { front: "Main character energy", back: "Энергия главного героя / уверенность", example: "1. Walking into the interview with main character energy.\n2. He has total main character energy." },
+                { front: "Sus", back: "Подозрительный", example: "1. His reaction to the question was a bit sus.\n2. That error log looks very sus." },
+                { front: "Simp", back: "Тот, кто слишком услужлив ради внимания", example: "1. Don't be a simp, focus on your ambitions.\n2. He acted like a total simp." },
+                { front: "Salty", back: "Обиженный / раздраженный", example: "1. Why are you so salty about losing the game?\n2. He got salty after the critique." },
+                { front: "Flex", back: "Понт / демонстрация успеха", example: "1. Building this app is a major flex.\n2. No flex, but our team solved it first." },
+                { front: "GOAT", back: "Greatest Of All Time (величайший)", example: "1. Lionel Messi is considered the GOAT of football.\n2. That coder is an absolute GOAT." },
+                { front: "Bet",` back: "Договорились / Обязательно / Идет!", example: "1. We will finish the project by Friday? — Bet.\n2. You think we can win? Bet." },
+                { front: "Period",` back: "И точка / без возражений", example: "1. This is the best framework for our project, period.\n2. We are launching tomorrow, period." },
+                { front: "Drip", back: "Стильный образ / шмотки", example: "1. Check out his new outfit, clean drip.\n2. He always has good drip." },
+                { front: "Bussin",` back: "Очень вкусно / невероятно круто", example: "1. This coffee is bussin.\n2. The performance was bussin." },
+                { front: "Sheesh", back: "Вау / ничего себе (восклицание)", example: "1. Sheesh, look at that loading speed!\n2. Sheesh, what a great presentation." },
+                { front: "Living rent-free", back: "Постоянно крутиться в голове", example: "1. That failure lives rent-free in my mind.\n2. This song lives rent-free in my head." },
+                { front: "Sesh", back: "Сессия / совместная тусовка или работа", example: "1. Let's have a coding sesh tonight.\n2. Long gaming sesh with friends." },
+                { front: "Valid",` back: "Годно / справедливо / зачет", example: "1. Your argument about the architecture is valid.\n2. That point is completely valid." },
+                { front: "Cap", back: "Ложь / вранье", example: "1. Is that true or is it cap?\n2. No cap, this is the best tool." },
+                { front: "Clout", back: "Влияние / популярность в сети", example: "1. He is doing it just for clout.\n2. Building a startup brings real value, not just clout." },
+                { front: "Simmer down", back: "Остынь / успокойся", example: "1. Simmer down, we will fix the bug.\n2. No need to get angry, simmer down." },
+                { front: "Snatched", back: "Идеально выглядящий / крутой", example: "1. Her outfit is completely snatched.\n2. The UI design looks snatched." },
+                { front: "Spit it out", back: "Выкладывай / говори быстрее", example: "1. Stop hesitating and spit it out.\n2. Spit it out, what did they say?" },
+                { front: "Take an L", back: "Потерпеть поражение / проиграть", example: "1. We took an L on that test, but we'll bounce back.\n2. Never fear taking an L; it's experience." },
+                { front: "Extra", back: "Драматичный / чересчур эмоциональный", example: "1. Why are you being so extra about a minor bug?\n2. His reaction was way too extra." },
+                { front: "Basic",` back: "Базовый / банальный / без изюминки", example: "1. Don't write basic code, think outside the box.\n2. That style is a bit too basic." },
+                { front: "Receipts",` back: "Доказательства / пруфы", example: "1. Show me the receipts for that performance test.\n2. Always keep receipts of your code commits." },
+                { front: "Shade",` back: "Неуважение / скрытая критика", example: "1. No shade to competitors, but our app is faster.\n2. He was throwing shade at the meeting." }
+            ],
+            custom: JSON.parse(localStorage.getItem('engflow_b2_custom')) || []
+        };
+
+        let currentCategory = 'idioms';
+        let cards = databases[currentCategory];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        const sentencesToBuild = [
+            { translation: "На твоем месте я бы запустил этот проект.", words: ["If", "I", "were", "you,", "I", "would", "launch", "this", "project."], correct: "If I were you, I would launch this project." },
+            { translation: "Едва мы начали встречу, как пропал интернет.", words: ["Hardly", "had", "we", "started", "the", "meeting", "when", "internet", "failed."], correct: "Hardly had we started the meeting when internet failed." }
+        ];
+        let currentSentenceIdx = 0;
+
+        const listeningPhrases = [
+            "If I were you, I would start building this startup immediately.",
+            "Hardly had I arrived when the presentation started.",
+            "We need to figure out how to solve this critical bug.",
+            "That new smartphone costs an arm and a leg.",
+            "Not only is he smart, but he is also a visionary leader."
+        ];
+        let currentListeningIdx = 0;
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            cards = databases[cat];
+            currentIndex = 0;
+            isFlipped = false;
+            document.getElementById('main-card').classList.remove('flipped');
+
+            document.getElementById('section-cards').classList.add('active');
+            document.getElementById('section-builder').classList.remove('active');
+            document.getElementById('section-listening').classList.remove('active');
+
+            updateMenuStyles(cat);
+            updateCard();
+        }
+
+        function switchMode(mode) {
+            document.getElementById('section-cards').classList.remove('active');
+            document.getElementById('section-builder').classList.remove('active');
+            document.getElementById('section-listening').classList.remove('active');
+
+            if (mode === 'builder') {
+                document.getElementById('section-builder').classList.add('active');
+                initBuilder();
+            } else if (mode === 'listening') {
+                document.getElementById('section-listening').classList.add('active');
+            }
+            updateMenuStyles(mode);
+        }
+
+        function updateMenuStyles(activeId) {
+            ['idioms', 'phrasal', 'grammar', 'slang', 'builder', 'listening'].forEach(id => {
+                const btn = document.getElementById(`btn-${id}`);
+                if (btn) btn.classList.remove('active');
+            });
+            const activeBtn = document.getElementById(`btn-${activeId}`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function updateCard() {
+            if (cards.length === 0) {
+                document.getElementById('card-front').innerText = "Список пуст! 🎉";
+                document.getElementById('card-back-title').innerText = "Добавь свои фразы ниже";
+                document.getElementById('card-example').innerText = "Или выбери другую категорию";
+                document.getElementById('count').innerText = 0;
+                return;
+            }
+            if (currentIndex >= cards.length) currentIndex = 0;
+
+            document.getElementById('card-front').innerText = cards[currentIndex].front;
+            document.getElementById('card-back-title').innerText = cards[currentIndex].back;
+            document.getElementById('card-example').innerText = cards[currentIndex].example;
+            document.getElementById('count').innerText = cards.length;
+            document.getElementById('card-tag').innerText = currentCategory.toUpperCase() + " • B2 (35+)";
+
+            if (isFlipped) toggleCard();
+        }
+
+        function toggleCard() {
+            const cardBox = document.getElementById('main-card');
+            isFlipped = !isFlipped;
+            if (isFlipped) cardBox.classList.add('flipped');
+            else cardBox.classList.remove('flipped');
+        }
+
+        function skipCard() {
+            if (cards.length === 0) return;
+            currentIndex = (currentIndex + 1) % cards.length;
+            updateCard();
+        }
+
+        function nextCard(known) {
+            if (cards.length === 0) return;
+            if (known) {
+                cards.splice(currentIndex, 1);
+                if (currentCategory === 'custom') {
+                    localStorage.setItem('engflow_b2_custom', JSON.stringify(cards));
+                }
+            } else {
+                currentIndex = (currentIndex + 1) % cards.length;
+            }
+            updateCard();
+        }
+
+        function speakCurrent() {
+            if (cards.length === 0) return;
+            const text = cards[currentIndex].front;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function initBuilder() {
+            const current = sentencesToBuild[currentSentenceIdx];
+            document.getElementById('builder-translation').innerText = `Перевод: "${current.translation}"`;
+            const wordsContainer = document.getElementById('builder-words');
+            const slotsContainer = document.getElementById('builder-slots');
+            slotsContainer.innerHTML = '';
+            document.getElementById('builder-feedback').innerText = '';
+
+            let shuffled = [...current.words].sort(() => Math.random() - 0.5);
+            wordsContainer.innerHTML = '';
+
+            shuffled.forEach((word) => {
+                const btn = document.createElement('button');
+                btn.className = "btn-action btn-hard";
+                styleButtonCompact(btn);
+                btn.innerText = word;
+                btn.onclick = () => slotsContainer.appendChild(btn);
+                wordsContainer.appendChild(btn);
+            });
+        }
+
+        function styleButtonCompact(btn) {
+            btn.style.padding = "6px 10px";
+            btn.style.fontSize = "11px";
+            btn.style.borderRadius = "8px";
+            btn.style.cursor = "pointer";
+        }
+
+        function checkBuilder() {
+            const slotsContainer = document.getElementById('builder-slots');
+            const userWords = Array.from(slotsContainer.children).map(el => el.innerText).join(' ');
+            const current = sentencesToBuild[currentSentenceIdx];
+            const feedback = document.getElementById('builder-feedback');
+
+            if (userWords === current.correct) {
+                feedback.innerText = "✅ Идеально! Структура собрана верно.";
+                feedback.style.color = "#34d399";
+                setTimeout(() => {
+                    currentSentenceIdx = (currentSentenceIdx + 1) % sentencesToBuild.length;
+                    initBuilder();
+                }, 2000);
+            } else {
+                feedback.innerText = "❌ Ошибка в порядке слов.";
+                feedback.style.color = "#fb7185";
+            }
+        }
+
+        function playListeningAudio() {
+            const phrase = listeningPhrases[currentListeningIdx];
+            const utterance = new SpeechSynthesisUtterance(phrase);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function checkListening() {
+            const userText = document.getElementById('listening-input').value.trim().toLowerCase();
+            const correctText = listeningPhrases[currentListeningIdx].toLowerCase();
+            const feedback = document.getElementById('listening-feedback');
+
+            const cleanUser = userText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            const cleanCorrect = correctText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+
+            if (cleanUser === cleanCorrect) {
+                feedback.innerText = "🎯 Отлично! Вы услышали всё верно!";
+                feedback.style.color = "#34d399";
+            } else {
+                feedback.innerText = `❌ Ошибка. Правильно: "${listeningPhrases[currentListeningIdx]}"`;
+                feedback.style.color = "#fb7185";
+            }
+        }
+
+        function nextListeningItem() {
+            currentListeningIdx = (currentListeningIdx + 1) % listeningPhrases.length;
+            document.getElementById('listening-input').value = '';
+            document.getElementById('listening-feedback').innerText = '';
+            playListeningAudio();
+        }
+
+        function addCard(event) {
+            event.preventDefault();
+            const front = document.getElementById('new-front').value;
+            const back = document.getElementById('new-back').value;
+            const example = document.getElementById('new-example').value;
+
+            databases.custom.push({ front, back, example });
+            localStorage.setItem('engflow_b2_custom', JSON.stringify(databases.custom));
+            if (currentCategory === 'custom') cards = databases.custom;
+            document.getElementById('add-form').reset();
+            setCategory('custom');
+        }
+
+        setCategory('idioms');
+    </script>
+</body>
+</html>
