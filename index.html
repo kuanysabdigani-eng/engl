@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngFlow Pro • B2 Ultimate Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-cyan-500 selection:text-white">
+
+    <!-- Шапка -->
+    <header class="w-full max-w-2xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-center border-b border-slate-800/60 gap-3">
+        <div>
+            <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">EngFlow Pro</h1>
+            <p class="text-xs text-slate-400">Полная экосистема для рывка к B2</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-xs px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-full font-semibold">Цель: B2</span>
+            <div id="stats" class="text-xs text-slate-400 font-medium">Осталось: <span id="count" class="text-cyan-400 font-bold">0</span></div>
+        </div>
+    </header>
+
+    <!-- Основной контент -->
+    <main class="w-full max-w-md mx-auto px-6 flex-grow flex flex-col justify-center items-center my-4">
+        
+        <!-- Переключатель категорий (Все разделы B2) -->
+        <div class="w-full grid grid-cols-3 gap-2 mb-3">
+            <button onclick="setCategory('idioms')" id="btn-idioms" class="py-2 px-2 text-xs font-semibold rounded-xl transition bg-slate-900 border border-slate-800 text-slate-300">Идиомы</button>
+            <button onclick="setCategory('phrasal')" id="btn-phrasal" class="py-2 px-2 text-xs font-semibold rounded-xl transition bg-slate-900 border border-slate-800 text-slate-300">Phrasal Verbs</button>
+            <button onclick="setCategory('grammar')" id="btn-grammar" class="py-2 px-2 text-xs font-semibold rounded-xl transition bg-slate-900 border border-slate-800 text-slate-300">Грамматика</button>
+        </div>
+        <div class="w-full grid grid-cols-3 gap-2 mb-4">
+            <button onclick="setCategory('slang')" id="btn-slang" class="py-2 px-2 text-xs font-semibold rounded-xl transition bg-slate-900 border border-slate-800 text-slate-300">Сленг/Кино</button>
+            <button onclick="setCategory('opinions')" id="btn-opinions" class="py-2 px-2 text-xs font-semibold rounded-xl transition bg-slate-900 border border-slate-800 text-slate-300">Аргументы</button>
+            <button onclick="setCategory('custom')" id="btn-custom" class="py-2 px-2 text-xs font-semibold rounded-xl transition bg-slate-900 border border-slate-800 text-slate-300">Мои фразы</button>
+        </div>
+
+        <!-- Карточка -->
+        <div class="w-full h-68 perspective-1000 cursor-pointer mb-4" onclick="toggleCard()">
+            <div id="card-inner" class="relative w-full h-full duration-500 transform-style-3d shadow-2xl rounded-2xl">
+                <!-- Лицевая сторона -->
+                <div class="absolute inset-0 w-full h-full bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between backface-hidden">
+                    <div class="flex justify-between items-center">
+                        <span id="card-category-tag" class="text-xs uppercase tracking-wider text-cyan-400 font-bold">B2 Level</span>
+                        <button onclick="event.stopPropagation(); speakCurrent()" class="p-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-xl transition border border-cyan-500/20" title="Прослушать носителя">
+                            🔊 Аудио
+                        </button>
+                    </div>
+                    <div class="text-center">
+                        <h2 id="card-front" class="text-xl font-bold tracking-tight text-white mb-2">Загрузка...</h2>
+                        <p class="text-xs text-slate-500">Кликни, чтобы открыть значение</p>
+                    </div>
+                    <div class="text-right text-xs text-slate-600">🎧 Слух и контекст</div>
+                </div>
+                <!-- Обратная сторона -->
+                <div class="absolute inset-0 w-full h-full bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 flex flex-col justify-between backface-hidden rotate-y-180">
+                    <span class="text-xs uppercase tracking-wider text-indigo-400 font-bold">Значение и пример</span>
+                    <div class="text-center">
+                        <h3 id="card-back" class="text-base font-bold text-cyan-200 mb-2">Перевод...</h3>
+                        <p id="card-example" class="text-xs text-slate-300 italic bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">Пример...</p>
+                    </div>
+                    <div class="text-right text-xs text-indigo-400">⚡️ Клик для возврата</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопка проверки разговорной речи -->
+        <div class="w-full mb-4">
+            <button onclick="startSpeechRecognition()" id="mic-btn" class="w-full py-3 px-4 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 font-medium rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-lg">
+                🎙️ Сказать фразу в микрофон (Спикинг)
+            </button>
+            <p id="speech-result" class="text-xs text-center text-slate-400 mt-2 h-4 font-medium"></p>
+        </div>
+
+        <!-- Кнопки управления прогрессом -->
+        <div class="w-full grid grid-cols-2 gap-3 mb-5">
+            <button onclick="nextCard(false)" class="py-3 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-medium rounded-xl transition text-sm active:scale-95">Сложно 🔄</button>
+            <button onclick="nextCard(true)" class="py-3 px-4 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-xl transition text-sm shadow-lg shadow-cyan-600/20 active:scale-95">Знаю ✅</button>
+        </div>
+
+        <!-- Форма добавления своей фразы -->
+        <div class="w-full bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Добавить свою конструкцию</h3>
+            <form id="add-form" onsubmit="addCard(event)" class="space-y-2">
+                <input type="text" id="new-front" placeholder="Фраза / Выражение" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition">
+                <input type="text" id="new-back" placeholder="Перевод / Значение" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition">
+                <input type="text" id="new-example" placeholder="Пример предложения" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition">
+                <button type="submit" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition">Добавить в базу</button>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Подвал -->
+    <footer class="w-full max-w-2xl mx-auto px-6 py-4 text-center text-xs text-slate-600 border-t border-slate-900">
+        EngFlow Pro • Твой карманный тренажер B2
+    </footer>
+
+    <!-- Логика приложения -->
+    <script>
+        const databases = {
+            idioms: [
+                { front: "To bite the bullet", back: "Стиснуть зубы / перетерпеть", example: "I hate dentists, but I have to bite the bullet." },
+                { front: "Under the weather", back: "Плохо себя чувствовать", example: "I'm feeling a bit under the weather today." },
+                { front: "Cost an arm and a leg", back: "Стоить целое состояние", example: "That new laptop costs an arm and a leg." }
+            ],
+            phrasal: [
+                { front: "To figure out", back: "Разрулить / разобраться", example: "We need to figure out how to solve this." },
+                { front: "To bring up", back: "Поднять тему / упомянуть", example: "Why did you have to bring that up?" },
+                { front: "To look forward to", back: "Ждать с нетерпением", example: "I'm looking forward to the weekend." }
+            ],
+            grammar: [
+                { front: "If I were you, I would...", back: "На твоем месте я бы... (2nd Conditional)", example: "If I were you, I would start coding now." },
+                { front: "Having done that, he...", back: "Сделав это, он... (Participle Clause)", example: "Having finished his homework, he went outside." },
+                { front: "Hardly had I arrived when...", back: "Едва я прибыл, как... (Inversion)", example: "Hardly had I arrived when it started to rain." }
+            ],
+            slang: [
+                { front: "It is what it is", back: "Бывает / Такова реальность", example: "We lost the match, but it is what it is." },
+                { front: "Out of nowhere", back: "Внезапно / из ниоткуда", example: "He appeared out of nowhere during the game." },
+                { front: "To stay on top of things", back: "Контролировать ситуацию", example: "I use apps to stay on top of things." }
+            ],
+            opinions: [
+                { front: "From my perspective...", back: "С моей точки зрения...", example: "From my perspective, this is the best approach." },
+                { front: "It is widely believed that...", back: "Широко распространено мнение, что...", example: "It is widely believed that AI will change education." },
+                { front: "I'm convinced that...", back: "Я убежден, что...", example: "I'm convinced that we can build a cool startup." }
+            ],
+            custom: JSON.parse(localStorage.getItem('engflow_custom_v3')) || []
+        };
+
+        let currentCategory = 'idioms';
+        let cards = databases[currentCategory];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        function setCategory(category) {
+            currentCategory = category;
+            cards = databases[category];
+            currentIndex = 0;
+            isFlipped = false;
+
+            // Обновляем подсветку кнопок
+            const allBtns = document.querySelectorAll('main > div button');
+            allBtns.forEach(btn => {
+                btn.className = "py-2 px-2 text-xs font-semibold rounded-xl transition bg-slate-900 border border-slate-800 text-slate-300";
+            });
+            document.getElementById(`btn-${category}`).className = "py-2 px-2 text-xs font-semibold rounded-xl transition bg-cyan-600/20 border border-cyan-500/50 text-cyan-300 font-bold";
+
+            updateCard();
+        }
+
+        function updateCard() {
+            if (cards.length === 0) {
+                document.getElementById('card-front').innerText = "Раздел пуст! 🎉";
+                document.getElementById('card-back').innerText = "Добавь свои фразы ниже";
+                document.getElementById('card-example').innerText = "Или выбери другой раздел вверху";
+                document.getElementById('count').innerText = 0;
+                return;
+            }
+            if (currentIndex >= cards.length) currentIndex = 0;
+
+            document.getElementById('card-front').innerText = cards[currentIndex].front;
+            document.getElementById('card-back').innerText = cards[currentIndex].back;
+            document.getElementById('card-example').innerText = cards[currentIndex].example;
+            document.getElementById('count').innerText = cards.length;
+            document.getElementById('card-category-tag').innerText = currentCategory.toUpperCase() + " • B2";
+
+            if (isFlipped) toggleCard();
+        }
+
+        function toggleCard() {
+            const cardInner = document.getElementById('card-inner');
+            isFlipped = !isFlipped;
+            cardInner.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+        }
+
+        function speakCurrent() {
+            if (cards.length === 0) return;
+            const text = cards[currentIndex].front;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function startSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Открой в Google Chrome для проверки голоса!");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            const statusEl = document.getElementById('speech-result');
+            
+            statusEl.innerText = "🎤 Слушаю твой голос...";
+            statusEl.className = "text-xs text-center text-yellow-400 mt-2 h-4 font-medium";
+
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                const saidText = event.results[0][0].transcript.toLowerCase();
+                const targetText = cards[currentIndex].front.toLowerCase();
+                
+                if (saidText.includes(targetText.substring(0, 4))) {
+                    statusEl.innerText = `✅ Отличное произношение!`;
+                    statusEl.className = "text-xs text-center text-emerald-400 mt-2 h-4 font-medium";
+                } else {
+                    statusEl.innerText = `❌ Услышано: "${saidText}". Попробуй еще раз!`;
+                    statusEl.className = "text-xs text-center text-rose-400 mt-2 h-4 font-medium";
+                }
+            };
+
+            recognition.onerror = function() {
+                statusEl.innerText = "⚠️ Ошибка микрофона. Попробуй снова.";
+                statusEl.className = "text-xs text-center text-rose-400 mt-2 h-4 font-medium";
+            };
+        }
+
+        function nextCard(known) {
+            if (cards.length === 0) return;
+            if (known) {
+                cards.splice(currentIndex, 1);
+                if (currentCategory === 'custom') {
+                    localStorage.setItem('engflow_custom_v3', JSON.stringify(cards));
+                }
+            } else {
+                currentIndex++;
+            }
+            updateCard();
+            document.getElementById('speech-result').innerText = "";
+        }
+
+        function addCard(event) {
+            event.preventDefault();
+            const front = document.getElementById('new-front').value;
+            const back = document.getElementById('new-back').value;
+            const example = document.getElementById('new-example').value;
+
+            databases.custom.push({ front, back, example });
+            localStorage.setItem('engflow_custom_v3', JSON.stringify(databases.custom));
+            
+            if (currentCategory === 'custom') {
+                cards = databases.custom;
+            }
+
+            document.getElementById('add-form').reset();
+            setCategory('custom');
+        }
+
+        // Инициализация при старте
+        setCategory('idioms');
+    </script>
+</body>
+</html>
